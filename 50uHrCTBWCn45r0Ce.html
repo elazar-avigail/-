@@ -1,0 +1,185 @@
+<html><head><base href="https://yeshivah.kriah.yaarim.edu/">
+<meta charset="utf-8">
+<title>ישיבה גדולה קריית יערים - סקר קעמפ עם גרף תוצאות</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    direction: rtl;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  h1, h2 {
+    color: #003366;
+    text-align: center;
+  }
+  .survey {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #e6f3ff;
+    border-radius: 5px;
+  }
+  .survey h2 {
+    color: #0066cc;
+  }
+  .survey form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .survey label {
+    margin: 10px 0;
+    font-weight: bold;
+  }
+  .survey button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .survey button:hover {
+    background-color: #004080;
+  }
+  #resultsChart {
+    margin-top: 30px;
+  }
+  .hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>ברוכים הבאים לישיבה גדולה קריית יערים</h1>
+    
+    <div id="surveyContainer" class="survey">
+      <h2>סקר קעמפ</h2>
+      <p>אנא בחרו את השבוע המועדף עליכם לקעמפ:</p>
+      
+      <form id="surveyForm">
+        <label>
+          <input type="radio" name="campWeek" value="first" required>
+          שבוע ראשון
+        </label>
+        <label>
+          <input type="radio" name="campWeek" value="second" required>
+          שבוע שני
+        </label>
+        <button type="submit">שלח</button>
+      </form>
+    </div>
+
+    <div id="alreadyVoted" class="survey hidden">
+      <h2>תודה על השתתפותך</h2>
+      <p>כבר הצבעת בסקר זה. לא ניתן להצביע יותר מפעם אחת.</p>
+    </div>
+
+    <div id="resultsChart">
+      <h2>תוצאות הסקר</h2>
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    let firstWeekVotes = 0;
+    let secondWeekVotes = 0;
+
+    const ctx = document.getElementById('chart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['שבוע ראשון', 'שבוע שני'],
+        datasets: [{
+          label: 'מספר קולות',
+          data: [firstWeekVotes, secondWeekVotes],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 99, 132, 0.6)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 132, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+
+    function hasVoted() {
+      return localStorage.getItem('hasVoted') === 'true';
+    }
+
+    function setVoted() {
+      localStorage.setItem('hasVoted', 'true');
+    }
+
+    function showVotedMessage() {
+      document.getElementById('surveyContainer').classList.add('hidden');
+      document.getElementById('alreadyVoted').classList.remove('hidden');
+    }
+
+    if (hasVoted()) {
+      showVotedMessage();
+    }
+
+    document.getElementById('surveyForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      if (hasVoted()) {
+        alert('כבר הצבעת בסקר זה. לא ניתן להצביע יותר מפעם אחת.');
+        showVotedMessage();
+        return;
+      }
+
+      const selectedWeek = document.querySelector('input[name="campWeek"]:checked').value;
+      
+      if (selectedWeek === 'first') {
+        firstWeekVotes++;
+      } else {
+        secondWeekVotes++;
+      }
+
+      // עדכון הגרף
+      chart.data.datasets[0].data = [firstWeekVotes, secondWeekVotes];
+      chart.update();
+
+      const weekText = selectedWeek === 'first' ? 'הראשון' : 'השני';
+      alert('תודה על השתתפותך בסקר! בחרת בשבוע ' + weekText + ' לקעמפ.');
+      
+      // סימון שהמשתמש הצביע
+      setVoted();
+      showVotedMessage();
+      
+      // איפוס הטופס
+      this.reset();
+    });
+  </script>
+</body></html>
